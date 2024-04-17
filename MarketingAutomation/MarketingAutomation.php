@@ -12,44 +12,33 @@ use Symfony\Component\Process\PhpSubprocess;
 class MarketingAutomation
 {
   private $test = "test";
-  private $workingDir = __DIR__ . DIRECTORY_SEPARATOR . ".." . DIRECTORY_SEPARATOR;
+  private $processDir;
 
-
+  private $processes = [];
 
   function __construct($test)
   {
     $this->test = $test;
+    // Imposta il percorso della directory dei processi
+    $this->processDir = __DIR__ . DIRECTORY_SEPARATOR . ".." . DIRECTORY_SEPARATOR . "processes" . DIRECTORY_SEPARATOR;
+    $this->loadProcesses();
   }
 
-  function runP1()
+  function loadProcesses()
   {
-    $process = new PhpSubprocess(["process1.php"], $this->workingDir, null, 10);
-    $process->start();
-    echo "Sto eseguendo mentre il processo 1 è stato avviato: " . PHP_EOL;
-    $process->wait();
-    echo "fine processo 1. " . PHP_EOL;
-    if (!$process->isSuccessful()) {
-      throw new ProcessFailedException($process);
+    if (!is_dir($this->processDir)) {
+      echo "Directory dei processi non trovata.";
+      return;
     }
-    return $process->getOutput();
-  }
-
-
-  function runP2()
-  {
-    $process = new PhpSubprocess(["process2.php"], $this->workingDir, null, 10);
-    echo "Sto per eseguire processo 2" . PHP_EOL;
-    $process->run(function ($type, $buffer): void {
-      if (PhpSubprocess::ERR === $type) {
-        echo 'ERR > ' . $buffer;
-      } else {
-        echo 'OUT > ' . $buffer;
+    $files = scandir($this->processDir);
+    if ($files === false) {
+      echo "Errore durante la lettura della directory.";
+      return;
+    }
+    foreach ($files as $file) {
+      if (pathinfo($file, PATHINFO_EXTENSION) === 'php') {
+        $this->processes[] = $file;
       }
-    });
-    echo "fine processo 2";
-    if (!$process->isSuccessful()) {
-      throw new ProcessFailedException($process);
     }
-    $process->getOutput();
   }
 }
